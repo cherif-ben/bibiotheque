@@ -10,4 +10,7 @@ import java.util.List;
 public interface BorrowRepository extends JpaRepository<Borrow, Integer> {
     List<Borrow> findByUserId(Integer userId);
     List<Borrow> findByBookId(Integer bookId);
+
+    // Vérifier si un livre est actuellement emprunté (returnDate null)
+    boolean existsByBookIdAndReturnDateIsNull(Integer bookId);
 }
