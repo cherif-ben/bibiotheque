@@ -1,0 +1,48 @@
+name: bibliotheque
+
+services:
+  db:
+    # Version alignée sur le volume existant (données initialisées en PG 15)
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: bibliotheque
+      POSTGRES_USER: bibliotheque
+      POSTGRES_PASSWORD: bibliotheque
+    ports:
+      - "5433:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/seed.sql:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bibliotheque -d bibliotheque"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./bibliotheque-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/bibliotheque
+      SPRING_DATASOURCE_USERNAME: bibliotheque
+      SPRING_DATASOURCE_PASSWORD: bibliotheque
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./bibliotheque-frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8080
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+volumes:
+  db-data:

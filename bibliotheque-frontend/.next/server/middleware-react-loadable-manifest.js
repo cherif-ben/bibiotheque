@@ -1,0 +1,1 @@
+self.__REACT_LOADABLE_MANIFEST="{\"features/borrows/components/BorrowTable.tsx -> ../borrows.api\":{\"id\":\"features/borrows/components/BorrowTable.tsx -> ../borrows.api\",\"files\":[]}}"
