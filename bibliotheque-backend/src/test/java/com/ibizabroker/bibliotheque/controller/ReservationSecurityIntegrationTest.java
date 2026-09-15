@@ -250,4 +250,40 @@ class ReservationSecurityIntegrationTest {
 
         assertEquals(403, response.getStatusCodeValue());
     }
+
+    // ─── Admin suppression d'utilisateur ─────────────────────────
+
+    @Test
+    void deleteUser_withoutToken_returns401() {
+        // RS-01 : sans token -> 401
+        ResponseEntity<String> response = restTemplate.exchange(
+            "http://localhost:" + port + "/admin/users/10",
+            HttpMethod.DELETE, entityWithoutToken(), String.class);
+
+        assertEquals(401, response.getStatusCodeValue());
+    }
+
+    @Test
+    void deleteUser_withAdherentToken_returns403() throws Exception {
+        // RS-02 : un ADHERENT ne peut pas supprimer un utilisateur
+        String token = authenticate("adherent1", "admin123");
+
+        ResponseEntity<String> response = restTemplate.exchange(
+            "http://localhost:" + port + "/admin/users/10",
+            HttpMethod.DELETE, entityWithBearerToken(token), String.class);
+
+        assertEquals(403, response.getStatusCodeValue());
+    }
+
+    @Test
+    void deleteUser_withBibliothecaireToken_returns204() throws Exception {
+        // BIBLIOTHECAIRE peut supprimer un autre utilisateur
+        String token = authenticate("bibliothecaire", "admin123");
+
+        ResponseEntity<Void> response = restTemplate.exchange(
+            "http://localhost:" + port + "/admin/users/10",
+            HttpMethod.DELETE, entityWithBearerToken(token), Void.class);
+
+        assertEquals(204, response.getStatusCodeValue());
+    }
 }

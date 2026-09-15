@@ -17,7 +17,7 @@ public class Users {
     private String name;
         @Schema(hidden = true, description = "Mot de passe chiffré, jamais exposé dans les réponses API")
         private String password;
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH})
     @JoinTable(name = "USER_ROLE",
             joinColumns = {
                     @JoinColumn(name = "USER_ID")

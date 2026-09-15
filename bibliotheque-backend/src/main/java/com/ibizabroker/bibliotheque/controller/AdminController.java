@@ -12,8 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.List;
 
 @CrossOrigin({"http://localhost:3000", "http://localhost:4200"})
@@ -27,6 +30,9 @@ public class AdminController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @PostMapping("/users")
 //    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
@@ -95,5 +101,22 @@ public class AdminController {
 
         Users updatedUser = usersRepository.save(user);
         return ResponseEntity.ok(updatedUser);
+    }
+
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
+    @DeleteMapping("/users/{id}")
+    @Transactional
+    @Operation(summary = "Supprimer un utilisateur", description = "Supprime un utilisateur par son identifiant. Réservé au rôle BIBLIOTHECAIRE.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Utilisateur supprimé avec succès."),
+        @ApiResponse(responseCode = "401", description = "Authentification requise : le token JWT est absent, invalide ou expiré."),
+        @ApiResponse(responseCode = "403", description = "Accès refusé : le rôle BIBLIOTHECAIRE est requis."),
+        @ApiResponse(responseCode = "404", description = "Aucun utilisateur ne correspond à cet identifiant.")
+    })
+    public ResponseEntity<Void> deleteUser(@Parameter(description = "Identifiant unique de l'utilisateur à supprimer", required = true) @PathVariable Integer id) {
+        Users user = usersRepository.findById(id).orElseThrow(() -> new NotFoundException("Utilisateur introuvable : aucun utilisateur ne possède l'identifiant " + id + "."));
+        entityManager.createNativeQuery("DELETE FROM user_role WHERE user_id = ?1").setParameter(1, id).executeUpdate();
+        usersRepository.delete(user);
+        return ResponseEntity.noContent().build();
     }
 }
