@@ -44,4 +44,6 @@ export const reservationsApi = {
   cancel: (id: number) =>
     api.patch<Reservation>(`/api/reservations/${id}/annuler`, {}).then((r) => r.data),
   remove: (id: number) => api.delete(`/api/reservations/${id}`),
+  confirm: (id: number) =>
+    api.post<Reservation>(`/api/reservations/${id}/confirmer`, {}).then((r) => r.data),
 };

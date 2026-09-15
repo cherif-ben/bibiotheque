@@ -313,10 +313,10 @@ Base : `http://localhost:8080`
 
 ```json
 {
-    "bookName": "Le Petit Prince",
-    "bookAuthor": "Antoine de Saint-Exupéry",
-    "bookGenre": "Conte",
-    "noOfCopies": 5
+    "bookName": "L1",
+    "bookAuthor": "Auteur L1",
+    "bookGenre": "Genre L1",
+    "noOfCopies": 1
 }
 ```
 

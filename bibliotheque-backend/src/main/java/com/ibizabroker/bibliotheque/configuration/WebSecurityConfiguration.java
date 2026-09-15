@@ -43,7 +43,7 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 // RS-01 : toute la zone /api/reservations exige un token valide
                 .antMatchers("/api/reservations/**").authenticated()
-                .antMatchers("/authenticate", "/api/users", "/borrow/**", "/admin/books/", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .antMatchers("/authenticate", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .antMatchers(HttpHeaders.ALLOW).permitAll()
                 .anyRequest().authenticated()
                 .and()

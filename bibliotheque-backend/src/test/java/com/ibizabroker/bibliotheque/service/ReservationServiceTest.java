@@ -54,7 +54,7 @@ class ReservationServiceTest {
     private Users adherent(int id) {
         Users user = new Users();
         user.setUserId(id);
-        user.setUsername("adherent" + id);
+        user.setUsername("A" + id);
         return user;
     }
 
@@ -125,7 +125,7 @@ class ReservationServiceTest {
         Users bibliothecaire = adherent(1);
         bibliothecaire.setUsername("bibliothecaire");
         Users targetAdherent = adherent(11);
-        targetAdherent.setUsername("adherent2");
+        targetAdherent.setUsername("A2");
         Books book = new Books();
         book.setBookId(1);
         book.setBookName("Livre emprunté");
@@ -148,7 +148,7 @@ class ReservationServiceTest {
                 .thenReturn(0L);
         when(reservationRepository.save(any(Reservation.class))).thenReturn(saved);
 
-        // When : le BIBLIOTHECAIRE crée une réservation pour adherent2 (user_id 11)
+        // When : le BIBLIOTHECAIRE crée une réservation pour A2 (user_id 11)
         ReservationRequest request = new ReservationRequest(1, 11);
         ReservationResponse response = reservationService.createReservation(request);
 

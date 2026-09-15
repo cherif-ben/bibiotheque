@@ -103,7 +103,15 @@ export function useReservations(statutFiltre: ReservationFilter = 'TOUS') {
     [load],
   );
 
-  return { items, loading, error, statusCounts, totalItems, totalPages, page, pageSize, setPageSize, sortBy, setSortBy, sortOrder, setSortOrder, reload: load, changePage, cancel, remove };
+  const confirm = useCallback(
+    async (id: number) => {
+      await reservationsApi.confirm(id);
+      await load();
+    },
+    [load],
+  );
+
+  return { items, loading, error, statusCounts, totalItems, totalPages, page, pageSize, setPageSize, sortBy, setSortBy, sortOrder, setSortOrder, reload: load, changePage, cancel, remove, confirm };
 }
 
 export function useReservation(id: number | null) {

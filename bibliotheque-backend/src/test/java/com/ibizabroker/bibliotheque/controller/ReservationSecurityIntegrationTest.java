@@ -62,8 +62,8 @@ class ReservationSecurityIntegrationTest {
             // Comptes de test — même mot de passe pour tous : admin123
             String hash = passwordEncoder.encode("admin123");
             upsertUser(1, "bibliothecaire", "La Bibliothecaire", hash, 1);
-            upsertUser(10, "adherent1", "Adherent Un", hash, 2);
-            upsertUser(11, "adherent2", "Adherent Deux", hash, 2);
+            upsertUser(10, "A1", "Adherent Un", hash, 2);
+            upsertUser(11, "A2", "Adherent Deux", hash, 2);
 
             // Un livre
             entityManager.createNativeQuery(
@@ -76,7 +76,7 @@ class ReservationSecurityIntegrationTest {
                 .setParameter(5, 0)
                 .executeUpdate();
 
-            // Une réservation appartenant à adherent2 (user_id = 11)
+            // Une réservation appartenant à A2 (user_id = 11)
             entityManager.createNativeQuery(
                 "MERGE INTO reservations (id, livre_id, adherent_id, date_reservation, date_expiration, statut) "
                 + "KEY (id) VALUES (?, ?, ?, ?, ?, ?)")
@@ -166,7 +166,7 @@ class ReservationSecurityIntegrationTest {
     @Test
     void getAllReservations_withAdherentToken_returns200() throws Exception {
         // RS-02 / RS-05 : un ADHERENT authentifié consulte ses réservations
-        String token = authenticate("adherent1", "admin123");
+        String token = authenticate("A1", "admin123");
 
         ResponseEntity<String> response = restTemplate.exchange(
             "http://localhost:" + port + "/api/reservations",
@@ -178,8 +178,8 @@ class ReservationSecurityIntegrationTest {
     @Test
     void getReservationById_withAdherentToken_onAnotherAdherentsReservation_returns403() throws Exception {
         // RS-03 : un ADHERENT ne peut pas consulter la réservation d'un autre
-        // (la réservation 900 appartient à adherent2, le token est celui d'adherent1)
-        String token = authenticate("adherent1", "admin123");
+        // (la réservation 900 appartient à A2, le token est celui de A1)
+        String token = authenticate("A1", "admin123");
 
         ResponseEntity<String> response = restTemplate.exchange(
             "http://localhost:" + port + "/api/reservations/900",
@@ -193,7 +193,7 @@ class ReservationSecurityIntegrationTest {
     @Test
     void deleteReservation_withAdherentToken_returns403() throws Exception {
         // RS-02 : un ADHERENT qui tente une action réservée au BIBLIOTHECAIRE reçoit 403
-        String token = authenticate("adherent1", "admin123");
+        String token = authenticate("A1", "admin123");
 
         ResponseEntity<String> response = restTemplate.exchange(
             "http://localhost:" + port + "/api/reservations/900",
@@ -232,8 +232,8 @@ class ReservationSecurityIntegrationTest {
     @Test
     void createReservation_withAdherentToken_forAnotherAdherent_returns403() throws Exception {
         // RS-04 : un ADHERENT ne peut pas créer de réservation au nom d'un autre adhérent
-        // (adherent1 = user_id 10 tente de réserver pour adherent2 = user_id 11)
-        String token = authenticate("adherent1", "admin123");
+        // (A1 = user_id 10 tente de réserver pour A2 = user_id 11)
+        String token = authenticate("A1", "admin123");
 
         Map<String, Object> body = new HashMap<>();
         body.put("livreId", 100);
@@ -266,7 +266,7 @@ class ReservationSecurityIntegrationTest {
     @Test
     void deleteUser_withAdherentToken_returns403() throws Exception {
         // RS-02 : un ADHERENT ne peut pas supprimer un utilisateur
-        String token = authenticate("adherent1", "admin123");
+        String token = authenticate("A1", "admin123");
 
         ResponseEntity<String> response = restTemplate.exchange(
             "http://localhost:" + port + "/admin/users/10",

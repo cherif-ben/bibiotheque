@@ -26,43 +26,43 @@ done
 echo ""
 echo "🔍 Vérification des données de test..."
 
-# Tester login adherent1
+# Tester login A1
 RESP=$(curl -s $TIMEOUT -X POST "$API/authenticate" \
   -H "Content-Type: application/json" \
-  -d '{"username":"adherent1","password":"admin123"}')
+  -d '{"username":"A1","password":"admin123"}')
 
 TOKEN_A1=$(echo "$RESP" | grep -o '"jwtToken":"[^"]*"' | cut -d'"' -f4)
 
 if [ -z "$TOKEN_A1" ]; then
-  echo "❌ Login adherent1/admin123 échoué — les données de test ne sont pas en place"
+  echo "❌ Login A1/admin123 échoué — les données de test ne sont pas en place"
   echo "   Vérifiez que data.sql a été exécuté correctement."
   exit 1
 fi
-echo "✅ Login adherent1 OK"
+echo "✅ Login A1 OK"
 
-# Tester login adherent2
+# Tester login A2
 RESP=$(curl -s $TIMEOUT -X POST "$API/authenticate" \
   -H "Content-Type: application/json" \
-  -d '{"username":"adherent2","password":"admin123"}')
+  -d '{"username":"A2","password":"admin123"}')
 TOKEN_A2=$(echo "$RESP" | grep -o '"jwtToken":"[^"]*"' | cut -d'"' -f4)
 
 if [ -z "$TOKEN_A2" ]; then
-  echo "❌ Login adherent2/admin123 échoué"
+  echo "❌ Login A2/admin123 échoué"
   exit 1
 fi
-echo "✅ Login adherent2 OK"
+echo "✅ Login A2 OK"
 
-# Tester login adherent3
+# Tester login A3
 RESP=$(curl -s $TIMEOUT -X POST "$API/authenticate" \
   -H "Content-Type: application/json" \
-  -d '{"username":"adherent3","password":"admin123"}')
+  -d '{"username":"A3","password":"admin123"}')
 TOKEN_A3=$(echo "$RESP" | grep -o '"jwtToken":"[^"]*"' | cut -d'"' -f4)
 
 if [ -z "$TOKEN_A3" ]; then
-  echo "❌ Login adherent3/admin123 échoué"
+  echo "❌ Login A3/admin123 échoué"
   exit 1
 fi
-echo "✅ Login adherent3 OK"
+echo "✅ Login A3 OK"
 
 # Tester login admin
 RESP=$(curl -s $TIMEOUT -X POST "$API/authenticate" \
@@ -92,22 +92,23 @@ check_reservation () {
   echo "✅ $LABEL : $COUNT réservation(s) visible(s) — RS-05 OK"
 }
 
-check_reservation "$TOKEN_A1" "A1 (adherent1)"
-check_reservation "$TOKEN_A2" "A2 (adherent2)"
+check_reservation "$TOKEN_A1" "A1 (A1)"
+check_reservation "$TOKEN_A2" "A2 (A2)"
+check_reservation "$TOKEN_A3" "A3 (A3)"
 
 echo ""
 echo "✅ Toutes les données de test sont en place!"
 echo ""
 echo "=== RÉCAPITULATIF ==="
-echo "📚 L1 (book_id=10) : Livre L1 — Disponible     → Disponible (1 copie)"
-echo "📚 L2 (book_id=11) : Livre L2 — Emprunté        → Emprunté par A3"
-echo "📚 L3 (book_id=12) : Livre L3 — Emprunté        → Emprunté par A3"
-echo "📚 L4 (book_id=13) : Livre L4 — Emprunté        → Emprunté par A3"
-echo "📚 L5 (book_id=14) : Livre L5 — Emprunté        → Emprunté par A3"
+echo "📚 L1 (book_id=10) : L1     → Disponible (1 copie)"
+echo "📚 L2 (book_id=11) : L2     → Emprunté par A3"
+echo "📚 L3 (book_id=12) : L3     → Emprunté par A3"
+echo "📚 L4 (book_id=13) : L4     → Emprunté par A3"
+echo "📚 L5 (book_id=14) : L5     → Emprunté par A3"
 echo ""
-echo "👤 A1 (user_id=10) : adherent1/admin123  — ADHERENT — réservation 101 sur L2"
-echo "👤 A2 (user_id=11) : adherent2/admin123  — ADHERENT — réservation 102 sur L3"
-echo "👤 A3 (user_id=12) : adherent3/admin123  — ADHERENT — Emprunteur L2-L5"
+echo "👤 A1 (user_id=10) : A1/admin123  — ADHERENT — réservation 101 sur L2"
+echo "👤 A2 (user_id=11) : A2/admin123  — ADHERENT — réservation 102 sur L3"
+echo "👤 A3 (user_id=12) : A3/admin123  — ADHERENT — Emprunteur L2-L5"
 echo "👑 B (user_id=1)  : admin/admin123       — BIBLIOTHECAIRE"
 echo ""
 echo "🔐 Rôles Séance 4 : ADHERENT / BIBLIOTHECAIRE"

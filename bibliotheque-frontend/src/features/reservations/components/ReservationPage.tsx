@@ -9,6 +9,7 @@ import ReservationForm from './ReservationForm';
 import Shell from '@/shared/ui/Shell';
 import { useI18n } from '@/shared/i18n';
 import { fmt } from '@/shared/utils';
+import Pagination from '@/shared/components/Pagination';
 
 /* --- Mappage des onglets de statut --- */
 type ReservationTab = 'EN_ATTENTE' | 'DISPONIBLE' | 'HONOREE' | 'ANNULEE';
@@ -38,7 +39,7 @@ export default function ReservationPage() {
     else setReady(true);
   }, [router]);
 
-  const { items, loading, error, statusCounts, reload, cancel, remove } = useReservations(statutFiltre);
+  const { items, loading, error, statusCounts, reload, cancel, remove, confirm, page, totalPages, totalItems, pageSize, changePage } = useReservations(statutFiltre);
   const isAdmin = auth.hasRole('BIBLIOTHECAIRE');
   const activeTab = filterToTab(statutFiltre);
 
@@ -123,18 +124,31 @@ export default function ReservationPage() {
             <p>{statutFiltre === 'TOUS' ? t('reservations.empty.all') : t('reservations.empty.filtered')}</p>
           </section>
         ) : (
-          <div className="res-list">
-            {items.map((r, idx) => (
-              <ReservationCardV3
-                key={r.id}
-                reservation={r}
-                onAnnuler={cancel}
-                onSupprimer={remove}
-                isAdmin={isAdmin}
-                index={idx}
-              />
-            ))}
-          </div>
+          <>
+            <div className="res-list">
+              {items.map((r, idx) => (
+                <ReservationCardV3
+                  key={r.id}
+                  reservation={r}
+                  onAnnuler={cancel}
+                  onSupprimer={remove}
+                  onConfirmer={confirm}
+                  isAdmin={isAdmin}
+                  index={idx}
+                />
+              ))}
+            </div>
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              total={totalItems}
+              pageSize={pageSize}
+              onChange={changePage}
+              infoKey="reservations.pagination.info"
+              prevKey="reservations.pagination.prev"
+              nextKey="reservations.pagination.next"
+            />
+          </>
         )}
       </section>
     </Shell>
@@ -146,11 +160,12 @@ interface ReservationCardV3Props {
   reservation: Reservation;
   onAnnuler: (id: number) => Promise<void>;
   onSupprimer: (id: number) => Promise<void>;
+  onConfirmer?: (id: number) => Promise<void>;
   isAdmin: boolean;
   index: number;
 }
 
-function ReservationCardV3({ reservation, onAnnuler, onSupprimer, isAdmin, index }: ReservationCardV3Props) {
+function ReservationCardV3({ reservation, onAnnuler, onSupprimer, onConfirmer, isAdmin, index }: ReservationCardV3Props) {
   const { t, locale } = useI18n();
 
   const userInitials = reservation.adherentNom
@@ -195,7 +210,16 @@ function ReservationCardV3({ reservation, onAnnuler, onSupprimer, isAdmin, index
     await onSupprimer(reservation.id);
   };
 
+  const handleConfirmer = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!confirm(t('reservations.confirm.confirm'))) return;
+    if (onConfirmer) {
+      await onConfirmer(reservation.id);
+    }
+  };
+
   const isPending = reservation.statut === 'EN_ATTENTE' || reservation.statut === 'DISPONIBLE';
+  const isDisponible = reservation.statut === 'DISPONIBLE';
   const formattedDate = fmt(reservation.dateReservation, locale);
 
   return (
@@ -239,6 +263,11 @@ function ReservationCardV3({ reservation, onAnnuler, onSupprimer, isAdmin, index
           </span>
 
           <div className="res-card-actions">
+            {isDisponible && isAdmin && onConfirmer && (
+              <button className="res-btn-primary" onClick={handleConfirmer}>
+                {t('reservations.confirm')}
+              </button>
+            )}
             {isPending && (
               <button className="res-btn-danger" onClick={handleAnnuler}>
                 {t('reservations.cancel')}

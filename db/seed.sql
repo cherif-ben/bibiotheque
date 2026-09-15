@@ -1,5 +1,5 @@
 -- =============================================================================
--- Données initiales : rôles, compte administrateur et quelques livres.
+-- Données initiales : rôles et compte administrateur.
 -- Idempotent : chaque instruction ne fait rien si la donnée existe déjà,
 -- le service `seed` de docker-compose peut donc être relancé sans risque.
 --
@@ -29,23 +29,6 @@ WHERE r.role_name = 'Admin'
       SELECT 1 FROM user_role ur
       WHERE ur.user_id = 1 AND ur.role_id = r.role_id
   );
-
--- Livres ------------------------------------------------------------------------
-INSERT INTO books (book_id, book_name, book_author, book_genre, no_of_copies)
-SELECT 1, 'Le Petit Prince', 'Antoine de Saint-Exupéry', 'Conte', 5
-WHERE NOT EXISTS (SELECT 1 FROM books WHERE book_id = 1);
-
-INSERT INTO books (book_id, book_name, book_author, book_genre, no_of_copies)
-SELECT 2, '1984', 'George Orwell', 'Science-fiction', 3
-WHERE NOT EXISTS (SELECT 1 FROM books WHERE book_id = 2);
-
-INSERT INTO books (book_id, book_name, book_author, book_genre, no_of_copies)
-SELECT 3, 'L''Étranger', 'Albert Camus', 'Roman', 4
-WHERE NOT EXISTS (SELECT 1 FROM books WHERE book_id = 3);
-
-INSERT INTO books (book_id, book_name, book_author, book_genre, no_of_copies)
-SELECT 4, 'Dune', 'Frank Herbert', 'Science-fiction', 2
-WHERE NOT EXISTS (SELECT 1 FROM books WHERE book_id = 4);
 
 -- Les identifiants AUTO de `books` et `users` passent par la séquence
 -- hibernate_sequence créée par Hibernate : on l'avance au-delà des

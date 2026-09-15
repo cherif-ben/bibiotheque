@@ -124,7 +124,7 @@ public class ReservationController {
 
     /**
      * DELETE /api/reservations/{id} — Supprimer une réservation
-     * RS-02 : réservé au BIBLIOTHECAIRE (403 pour un ADHERENT).
+     * Endpoint réservé au BIBLIOTHECAIRE (contrôlé par @PreAuthorize côté contrôleur).
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
@@ -139,5 +139,28 @@ public class ReservationController {
     public ResponseEntity<Void> deleteReservation(@PathVariable Long id) {
         reservationService.deleteReservation(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * POST /api/reservations/{id}/confirmer — Confirmer un emprunt
+     * BIBLIOTHECAIRE uniquement. Confirme l'emprunt d'un livre devenu DISPONIBLE
+     * au nom de l'adhérent réservataire (crée un Borrow, décrémente les copies,
+     * passe le statut à HONOREE).
+     */
+    @PostMapping("/{id}/confirmer")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
+    @Operation(summary = "Confirmer un emprunt",
+               description = "BIBLIOTHECAIRE : confirme l'emprunt d'un livre DISPONIBLE "
+                           + "au nom de l'adhérent réservataire.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Emprunt confirmé"),
+        @ApiResponse(responseCode = "401", description = "Token absent ou invalide"),
+        @ApiResponse(responseCode = "403", description = "Réservé au BIBLIOTHECAIRE"),
+        @ApiResponse(responseCode = "404", description = "Réservation introuvable"),
+        @ApiResponse(responseCode = "409", description = "Statut incompatible (DISPONIBLE requise)")
+    })
+    public ResponseEntity<ReservationResponse> confirmBorrow(@PathVariable Long id) {
+        ReservationResponse response = reservationService.confirmBorrow(id);
+        return ResponseEntity.ok(response);
     }
 }

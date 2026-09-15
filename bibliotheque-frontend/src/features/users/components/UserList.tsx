@@ -1,35 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUsers } from '../useUsers';
 import { getRole } from '@/shared/utils';
 import { Shell, Notice } from '@/shared/ui';
 import { useI18n } from '@/shared/i18n';
+import Pagination from '@/shared/components/Pagination';
+
+const PAGE_SIZE = 5;
 
 export default function UserList() {
   const { t } = useI18n();
   const router = useRouter();
   const { users, error } = useUsers();
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+
+  const filteredUsers = useMemo(() => {
+    const q = search.toLowerCase();
+    return users.filter((u) =>
+      u.name.toLowerCase().includes(q) ||
+      u.username.toLowerCase().includes(q) ||
+      getRole(u).toLowerCase().includes(q),
+    );
+  }, [users, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
+  const pageUsers = filteredUsers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const admins = users.filter((u) => getRole(u) === 'BIBLIOTHECAIRE');
   const adherents = users.filter((u) => getRole(u) === 'ADHERENT');
-
-  const filteredUsers = users.filter((u) => {
-    const q = search.toLowerCase();
-    return (
-      u.name.toLowerCase().includes(q) ||
-      u.username.toLowerCase().includes(q) ||
-      getRole(u).toLowerCase().includes(q)
-    );
-  });
 
   const roleColors: Record<string, { bg: string; color: string; label: string }> = {
     BIBLIOTHECAIRE: { bg: '#f59e0b15', color: '#f59e0b', label: 'Administrateur' },
     ADHERENT: { bg: '#3b82f615', color: '#3b82f6', label: 'Adhérent' },
   };
+
+  const handlePageChange = (p: number) => setPage(p);
 
   return (
     <Shell allowed={['BIBLIOTHECAIRE']} backHref="/">
@@ -71,7 +80,7 @@ export default function UserList() {
           type="text"
           placeholder="Rechercher par nom, identifiant ou rôle…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           className="users-search-input"
         />
         {search && (
@@ -83,53 +92,50 @@ export default function UserList() {
 
       <Notice text={error} />
 
-      {/* User grid */}
-      {filteredUsers.length === 0 ? (
+      {/* User list */}
+      {pageUsers.length === 0 ? (
         <section className="empty-state">
           <div className="empty-state-icon" aria-hidden="true">👤</div>
           <h2>Aucun utilisateur trouvé</h2>
           <p>{search ? 'Aucun résultat pour votre recherche.' : 'Aucun utilisateur enregistré.'}</p>
         </section>
       ) : (
-        <div className="users-grid">
-          {filteredUsers.map((user, idx) => {
-            const role = getRole(user);
-            const roleConfig = roleColors[role] || roleColors['ADHERENT'];
-            const initials = user.name
-              .split(' ')
-              .filter(Boolean)
-              .slice(0, 2)
-              .map((w) => w[0]!.toUpperCase())
-              .join('');
+        <>
+          <div className="users-list">
+            <div className="users-list-header">
+              <span className="users-list-th users-list-th-name">{t('users.name')}</span>
+              <span className="users-list-th users-list-th-username">{t('users.username')}</span>
+              <span className="users-list-th users-list-th-role">{t('users.role')}</span>
+              <span className="users-list-th users-list-th-id">{t('users.id')}</span>
+              <span className="users-list-th users-list-th-actions">{t('users.actions')}</span>
+            </div>
+            {pageUsers.map((user, idx) => {
+              const role = getRole(user);
+              const roleConfig = roleColors[role] || roleColors['ADHERENT'];
+              const initials = user.name
+                .split(' ')
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((w) => w[0]!.toUpperCase())
+                .join('');
 
-            return (
-              <div key={user.userId} className="user-card" style={{ animationDelay: `${idx * 40}ms` }}>
-                <div className="user-card-accent" style={{ background: roleConfig.color }} />
-                <div className="user-card-body">
-                  {/* Avatar + Info */}
-                  <div className="user-card-top">
-                    <div className="user-card-avatar" style={{ background: roleConfig.color }}>
+              return (
+                <div key={user.userId} className="users-list-row" style={{ animationDelay: `${idx * 30}ms` }}>
+                  <div className="users-list-cell users-list-cell-name">
+                    <div className="users-list-avatar" style={{ background: roleConfig.color }}>
                       {initials}
                     </div>
-                    <div className="user-card-info">
-                      <h3 className="user-card-name">{user.name}</h3>
-                      <p className="user-card-username">@{user.username}</p>
-                    </div>
+                    <span className="users-list-name">{user.name}</span>
                   </div>
-
-                  {/* Role badge */}
-                  <div className="user-card-role" style={{ background: roleConfig.bg, color: roleConfig.color, borderColor: `${roleConfig.color}30` }}>
-                    <span className="user-card-role-dot" style={{ background: roleConfig.color }} />
-                    {roleConfig.label}
-                  </div>
-
-                  {/* Meta */}
-                  <div className="user-card-meta">
-                    <span className="user-card-id">#{user.userId}</span>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="user-card-actions">
+                  <span className="users-list-cell users-list-cell-username">{user.username}</span>
+                  <span className="users-list-cell users-list-cell-role">
+                    <span className="users-list-role-badge" style={{ background: roleConfig.bg, color: roleConfig.color, borderColor: `${roleConfig.color}30` }}>
+                      <span className="users-list-role-dot" style={{ background: roleConfig.color }} />
+                      {roleConfig.label}
+                    </span>
+                  </span>
+                  <span className="users-list-cell users-list-cell-id">#{user.userId}</span>
+                  <div className="users-list-cell users-list-cell-actions">
                     {role === 'ADHERENT' && (
                       <button
                         className="user-btn-primary"
@@ -150,10 +156,20 @@ export default function UserList() {
                     </button>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={filteredUsers.length}
+            pageSize={PAGE_SIZE}
+            onChange={handlePageChange}
+            infoKey="users.pagination.info"
+            prevKey="users.pagination.prev"
+            nextKey="users.pagination.next"
+          />
+        </>
       )}
     </Shell>
   );

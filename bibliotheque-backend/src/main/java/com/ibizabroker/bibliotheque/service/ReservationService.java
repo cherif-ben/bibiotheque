@@ -1,13 +1,14 @@
 package com.ibizabroker.bibliotheque.service;
 
 import com.ibizabroker.bibliotheque.configuration.CurrentUserService;
-import com.ibizabroker.bibliotheque.dao.BooksRepository;
 import com.ibizabroker.bibliotheque.dao.BorrowRepository;
+import com.ibizabroker.bibliotheque.dao.BooksRepository;
 import com.ibizabroker.bibliotheque.dao.ReservationRepository;
 import com.ibizabroker.bibliotheque.dao.UsersRepository;
 import com.ibizabroker.bibliotheque.dto.ReservationRequest;
 import com.ibizabroker.bibliotheque.dto.ReservationResponse;
 import com.ibizabroker.bibliotheque.entity.Books;
+import com.ibizabroker.bibliotheque.entity.Borrow;
 import com.ibizabroker.bibliotheque.entity.Reservation;
 import com.ibizabroker.bibliotheque.entity.Users;
 import com.ibizabroker.bibliotheque.enums.StatutReservation;
@@ -20,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -198,6 +201,52 @@ public class ReservationService {
         Reservation reservation = reservationRepository.findById(id)
             .orElseThrow(() -> new NotFoundException("Réservation non trouvée avec l'id: " + id));
         reservationRepository.delete(reservation);
+    }
+
+    /**
+     * CONFIRMER UN EMPRUNT — BIBLIOTHECAIRE uniquement.
+     * Quand un livre est devenu DISPONIBLE (retourné), l'administrateur
+     * confirme l'emprunt au nom de l'adhérent réservataire :
+     *   1. Crée un emprunt (Borrow) pour l'adhérent
+     *   2. Décrémente le nombre de copies disponibles
+     *   3. Passe le statut de la réservation à HONOREE
+     */
+    @Transactional
+    public ReservationResponse confirmBorrow(Long id) {
+        Reservation reservation = reservationRepository.findById(id)
+            .orElseThrow(() -> new NotFoundException("Réservation non trouvée avec l'id: " + id));
+
+        if (reservation.getStatut() != StatutReservation.DISPONIBLE) {
+            throw new ConflictException(
+                "Seule une réservation DISPONIBLE peut être confirmée (statut actuel: "
+                + reservation.getStatut() + ")");
+        }
+
+        Books livre = booksRepository.findById(reservation.getLivre().getBookId())
+            .orElseThrow(() -> new NotFoundException(
+                "Livre non trouvé avec l'id: " + reservation.getLivre().getBookId()));
+
+        if (livre.getNoOfCopies() < 1) {
+            throw new ConflictException(
+                "Aucun exemplaire du livre « " + livre.getBookName() + " » n'est disponible");
+        }
+
+        Borrow borrow = new Borrow();
+        borrow.setBookId(reservation.getLivre().getBookId());
+        borrow.setUserId(reservation.getAdherent().getUserId());
+        borrow.setIssueDate(new java.util.Date());
+        Calendar c = Calendar.getInstance();
+        c.setTime(borrow.getIssueDate());
+        c.add(Calendar.DATE, 7);
+        borrow.setDueDate(c.getTime());
+        borrowRepository.save(borrow);
+
+        livre.borrowBook();
+        booksRepository.save(livre);
+
+        reservation.setStatut(StatutReservation.HONOREE);
+        Reservation confirmed = reservationRepository.save(reservation);
+        return toResponse(confirmed);
     }
 
     // ─── Sécurité ──────────────────────────────────────────────────────────────

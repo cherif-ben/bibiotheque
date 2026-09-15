@@ -13,22 +13,23 @@
 | Table | id | Détails |
 |-------|-----|---------|
 | **users** | 1 | admin / Administrateur (rôle **BIBLIOTHECAIRE**) |
-| **users** | 10 | adherent1 / Adhérent A1 — Réservataire (rôle **ADHERENT**) |
-| **users** | 11 | adherent2 / Adhérent A2 — Saturation (rôle **ADHERENT**) |
-| **users** | 12 | adherent3 / Adhérent A3 — Emprunteur (rôle **ADHERENT**) |
-| **books** | 10 | Livre L1 — 1 copie (**disponible**) |
-| **books** | 11 | Livre L2 — 0 copie (**emprunté** par adherent3) |
-| **books** | 12 | Livre L3 — 0 copie (**emprunté** par adherent3) |
-| **books** | 13 | Livre L4 — 0 copie (**emprunté** par adherent3) |
-| **books** | 14 | Livre L5 — 0 copie (**emprunté** par adherent3) |
-| **borrow** | 3-6 | adherent3 (id 12) emprunte L2, L3, L4, L5 (return_date = null) |
-| **reservations** | 101 | Livre L2 — adherent1 (id 10) — EN_ATTENTE |
-| **reservations** | 102 | Livre L3 — adherent2 (id 11) — EN_ATTENTE |
+| **users** | 10 | A1 |
+| **users** | 11 | A2 |
+| **users** | 12 | A3 |
+| **books** | 10 | L1 — 1 copie (**disponible**) |
+| **books** | 11 | L2 — 0 copie (**emprunté** par A3) |
+| **books** | 12 | L3 — 0 copie (**emprunté** par A3) |
+| **books** | 13 | L4 — 0 copie (**emprunté** par A3) |
+| **books** | 14 | L5 — 0 copie (**emprunté** par A3) |
+| **borrow** | 3-6 | A3 (id 12) emprunte L2, L3, L4, L5 (return_date = null) |
+| **reservations** | 101 | L2 — A1 (id 10) — EN_ATTENTE |
+| **reservations** | 102 | L3 — A2 (id 11) — EN_ATTENTE |
+| **reservations** | 103 | L5 — A3 (id 12) — EN_ATTENTE |
 
 > **Démo Séance 4** : chaque adhérent a déjà une réservation à son nom
 > (exigence du passage devant le formateur). Identifiants des comptes :
-> `admin/admin123` (BIBLIOTHECAIRE), `adherent1/admin123`, `adherent2/admin123`,
-> `adherent3/admin123` (ADHERENT).
+> `admin/admin123` (BIBLIOTHECAIRE), `A1/admin123`, `A2/admin123`,
+> `A3/admin123` (ADHERENT).
 
 **Mot de passe de tous les comptes : `admin123`**
 
@@ -43,7 +44,7 @@
 
 ```json
 {
-  "username": "adherent1",
+  "username": "A1",
   "password": "admin123"
 }
 ```
@@ -52,7 +53,7 @@
 
 ```json
 {
-  "user": { "userId": 10, "name": "Adhérent A1 — Réservataire", ... },
+  "user": { "userId": 10, "name": "A1", ... },
   "jwtToken": "eyJhbGciOiJIUzUxMiJ9..."
 }
 ```
@@ -80,9 +81,9 @@ Body :
 {
   "id": 103,
   "livreId": 13,
-  "livreTitre": "Livre L4 — Emprunté",
+  "livreTitre": "L4",
   "adherentId": 10,
-  "adherentNom": "Adhérent A1 — Réservataire",
+  "adherentNom": "A1",
   "dateReservation": "2026-09-11T11:33:45.420571",
   "dateExpiration": "2026-09-18T11:33:45.420571",
   "statut": "EN_ATTENTE"
@@ -90,7 +91,7 @@ Body :
 ```
 
 > **RS-04** : `adherentId` est ignoré pour un ADHERENT — la réservation est créée
-> au nom du porteur du token. Mettre `adherentId: 11` avec le token d'adherent1
+> au nom du porteur du token. Mettre `adherentId: 11` avec le token de A1
 > renvoie **403 Forbidden**.
 
 ---
@@ -197,15 +198,15 @@ Body :
 
 ## Étape 7 — Consulter une réservation
 
-**GET** `/api/reservations/101` — réservation d'adherent1 (le vôtre)
+**GET** `/api/reservations/101` — réservation de A1 (la vôtre)
 
 **Résultat attendu : 200 OK** — Détail de la réservation.
 
 Avec un ID inexistant :
 **GET** `/api/reservations/9999` → **404 Not Found**
 
-> **RS-03** : la réservation **102** (Livre L3) appartient à adherent2 —
-> avec le token d'adherent1, elle renvoie **403 Forbidden**.
+> **RS-03** : la réservation **102** (L3) appartient à A2 —
+> avec le token de A1, elle renvoie **403 Forbidden**.
 
 ---
 
@@ -266,10 +267,10 @@ DELETE sur un ID inexistant :
 | # | Requête | Token | Résultat attendu | Règle |
 |---|---------|-------|------------------|-------|
 | 1 | `GET /api/reservations` | *(aucun)* | **401** | RS-01 |
-| 2 | `GET /api/reservations` | adherent1 | **200** (ses réservations seulement) | RS-02, RS-05 |
-| 3 | `GET /api/reservations/102` (réservation d'adherent2) | adherent1 | **403** | RS-03 |
-| 4 | `POST /api/reservations` `{"livreId":14,"adherentId":11}` | adherent1 | **403** (pas de réservation au nom d'autrui) | RS-04 |
-| 5 | `DELETE /api/reservations/101` | adherent1 | **403** (réservé au bibliothécaire) | RS-02 |
+| 2 | `GET /api/reservations` | A1 | **200** (ses réservations seulement) | RS-02, RS-05 |
+| 3 | `GET /api/reservations/102` (réservation de A2) | A1 | **403** | RS-03 |
+| 4 | `POST /api/reservations` `{"livreId":14,"adherentId":11}` | A1 | **403** (pas de réservation au nom d'autrui) | RS-04 |
+| 5 | `DELETE /api/reservations/101` | A1 | **403** (réservé au bibliothécaire) | RS-02 |
 | 6 | `POST /api/reservations` `{"livreId":14,"adherentId":10}` | admin | **201** (réserve pour n'importe qui) | RS-02 |
 
 ### Où chaque règle est implémentée
