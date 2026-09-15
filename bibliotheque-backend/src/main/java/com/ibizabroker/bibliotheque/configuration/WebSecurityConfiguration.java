@@ -40,7 +40,10 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.cors();
         httpSecurity.csrf().disable()
-                .authorizeRequests().antMatchers("/authenticate", "/borrow/**", "/admin/books/").permitAll()
+                .authorizeRequests()
+                // RS-01 : toute la zone /api/reservations exige un token valide
+                .antMatchers("/api/reservations/**").authenticated()
+                .antMatchers("/authenticate", "/api/users", "/borrow/**", "/admin/books/", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .antMatchers(HttpHeaders.ALLOW).permitAll()
                 .anyRequest().authenticated()
                 .and()

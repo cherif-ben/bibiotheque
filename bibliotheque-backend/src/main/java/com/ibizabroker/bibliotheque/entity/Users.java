@@ -1,6 +1,7 @@
 package com.ibizabroker.bibliotheque.entity;
 
 import lombok.Data;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import javax.persistence.*;
 import java.util.Set;
@@ -14,7 +15,8 @@ public class Users {
     private Integer userId;
     private String username;
     private String name;
-    private String password;
+        @Schema(hidden = true, description = "Mot de passe chiffré, jamais exposé dans les réponses API")
+        private String password;
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(name = "USER_ROLE",
             joinColumns = {
